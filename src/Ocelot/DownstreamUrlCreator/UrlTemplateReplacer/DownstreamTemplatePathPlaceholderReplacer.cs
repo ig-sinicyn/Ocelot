@@ -1,26 +1,35 @@
+using System.Collections.Generic;
+using System.Text.RegularExpressions;
+
 using Ocelot.DownstreamRouteFinder.UrlMatcher;
 using Ocelot.Responses;
 using Ocelot.Values;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Ocelot.DownstreamUrlCreator.UrlTemplateReplacer
 {
     public class DownstreamTemplatePathPlaceholderReplacer : IDownstreamPathPlaceholderReplacer
     {
-        public Response<DownstreamPath> Replace(string downstreamPathTemplate,
+        // matches "{...}" tokens
+        private readonly Regex _placeholderRegex = new Regex("\\{[^}]*\\}", RegexOptions.Compiled);
+
+        public Response<DownstreamPath> Replace(
+            string downstreamPathTemplate,
             List<PlaceholderNameAndValue> urlPathPlaceholderNameAndValues)
         {
-            var downstreamPath = new StringBuilder();
-
-            downstreamPath.Append(downstreamPathTemplate);
-
-            foreach (var placeholderVariableAndValue in urlPathPlaceholderNameAndValues)
+            if (string.IsNullOrEmpty(downstreamPathTemplate))
             {
-                downstreamPath.Replace(placeholderVariableAndValue.Name, placeholderVariableAndValue.Value);
+                return new OkResponse<DownstreamPath>(new DownstreamPath(""));
             }
 
-            return new OkResponse<DownstreamPath>(new DownstreamPath(downstreamPath.ToString()));
+            var firstTemplateValues = new Dictionary<string, string>(urlPathPlaceholderNameAndValues.Count);
+            foreach (var nameAndValue in urlPathPlaceholderNameAndValues)
+            {
+                firstTemplateValues.TryAdd(nameAndValue.Name, nameAndValue.Value);
+            }
+
+            var downstreamPath = _placeholderRegex.Replace(downstreamPathTemplate, m => firstTemplateValues[m.Groups[0].Value]);
+
+            return new OkResponse<DownstreamPath>(new DownstreamPath(downstreamPath));
         }
     }
 }

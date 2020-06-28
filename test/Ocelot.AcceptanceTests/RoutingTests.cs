@@ -1,12 +1,17 @@
 namespace Ocelot.AcceptanceTests
 {
-    using Microsoft.AspNetCore.Http;
-    using Ocelot.Configuration.File;
-    using Shouldly;
     using System;
     using System.Collections.Generic;
     using System.Net;
+
+    using Microsoft.AspNetCore.Http;
+
+    using Ocelot.Configuration.File;
+
+    using Shouldly;
+
     using TestStack.BDDfy;
+
     using Xunit;
 
     public class RoutingTests : IDisposable
@@ -154,7 +159,7 @@ namespace Ocelot.AcceptanceTests
         }
 
         [Fact]
-        public void should_return_response_200_favouring_forward_slash()
+        public void should_return_response_200_favouring_forward_slash_catch_all()
         {
             var port = RandomPortFinder.GetRandomPort();
             var configuration = new FileConfiguration
@@ -170,7 +175,7 @@ namespace Ocelot.AcceptanceTests
                                 new FileHostAndPort
                                 {
                                     Host = "localhost",
-                                    Port = 51880,
+                                    Port = port,
                                 }
                             },
                             UpstreamPathTemplate = "/{url}",
@@ -185,7 +190,7 @@ namespace Ocelot.AcceptanceTests
                                 new FileHostAndPort
                                 {
                                     Host = "localhost",
-                                    Port = port,
+                                    Port = 51880,
                                 }
                             },
                             UpstreamPathTemplate = "/",
@@ -523,7 +528,7 @@ namespace Ocelot.AcceptanceTests
         }
 
         [Fact]
-        public void should_return_not_found()
+        public void should_return_ok()
         {
             var port = RandomPortFinder.GetRandomPort();
 
@@ -553,7 +558,8 @@ namespace Ocelot.AcceptanceTests
                 .And(x => _steps.GivenThereIsAConfiguration(configuration))
                 .And(x => _steps.GivenOcelotIsRunning())
                 .When(x => _steps.WhenIGetUrlOnTheApiGateway("/products/"))
-                .Then(x => _steps.ThenTheStatusCodeShouldBe(HttpStatusCode.NotFound))
+                .Then(x => _steps.ThenTheStatusCodeShouldBe(HttpStatusCode.OK))
+                .And(x => _steps.ThenTheResponseBodyShouldBe("Hello from Laura"))
                 .BDDfy();
         }
 
